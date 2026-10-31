@@ -6,7 +6,7 @@ const redis = Redis.fromEnv();
 
 export const userLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(30, "1 h"),
+  limiter: Ratelimit.slidingWindow(3, "1 h"),
   prefix: "rl:user",
 });
 

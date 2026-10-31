@@ -259,7 +259,7 @@ export default function Home() {
                 to download them.
               </p>
             )}
-            {result.length > 0 && (
+            {result.length > 0 && !sentToChat && (
               <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
                 <h2 className="mb-4 text-lg font-bold text-gray-900">
                   Your results
