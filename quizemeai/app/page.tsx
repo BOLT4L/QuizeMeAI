@@ -1,7 +1,7 @@
 // Save as: app/page.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import AdSlot from "@/components/AdSlot";
 
@@ -37,11 +37,12 @@ export default function Home() {
   const [anchorOpen, setAnchorOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [sentToChat, setSentToChat] = useState(false);
   const [result, setResult] = useState<GeneratedFile[]>([]);
   const [mode, setMode] = useState("");
   const [type, setType] = useState("");
   const [quantity, setQuantity] = useState("5");
+  const initData = () => (window as any).Telegram?.WebApp?.initData ?? "";
   // One place for the size check (used by the picker AND drag-and-drop)
   function handleFile(f: File | null) {
     if (f && f.size > MAX_SIZE) {
@@ -65,17 +66,40 @@ export default function Home() {
       formData.append("mode", mode);
       formData.append("type", type);
       formData.append("quantity", quantity);
-      const res = await fetch("/api/", { method: "POST", body: formData });
+      const res = await fetch("/api/", {
+        method: "POST",
+        headers: { "x-telegram-init-data": initData() },
+        body: formData,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setResult(data.result);
+      setSentToChat(Boolean(data.sentToChat));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
+  useEffect(() => {
+    (window as any).Telegram?.WebApp?.ready?.();
+    if (sessionStorage.getItem("tracked")) return;
+    sessionStorage.setItem("tracked", "1");
 
+    let anonId = localStorage.getItem("anonId");
+    if (!anonId) {
+      anonId = crypto.randomUUID();
+      localStorage.setItem("anonId", anonId);
+    }
+    fetch("/api/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-telegram-init-data": initData(),
+      },
+      body: JSON.stringify({ anonId }),
+    });
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
       {/* Header */}
@@ -229,6 +253,12 @@ export default function Home() {
             {error && (
               <p className="mt-3 text-center text-sm text-red-600">{error}</p>
             )}
+            {sentToChat && (
+              <p className="mb-3 text-sm text-green-700">
+                ✅ Your files were sent to your chat with the bot. Open the chat
+                to download them.
+              </p>
+            )}
             {result.length > 0 && (
               <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
                 <h2 className="mb-4 text-lg font-bold text-gray-900">
@@ -283,7 +313,9 @@ export default function Home() {
               </div>
             )}
           </section>
-          <a href="https://t.me/bbubbu11" className="text-center  m-5 p-5"><h1 className="bg-green-500">Contact Us</h1></a>
+          <a href="https://t.me/bbubbu11" className="text-center  m-5 p-5">
+            <h1 className="bg-green-500">Contact Us</h1>
+          </a>
           {/* AD 3 */}
           <AdSlot name="below-upload" w={728} h={90} className="mt-10" />
 
@@ -398,7 +430,10 @@ export default function Home() {
             <Link href="/terms" className="hover:text-indigo-700">
               Terms
             </Link>
-            <Link href="https://t.me/bbubbu11" className="hover:text-indigo-700">
+            <Link
+              href="https://t.me/bbubbu11"
+              className="hover:text-indigo-700"
+            >
               Contact
             </Link>
           </nav>

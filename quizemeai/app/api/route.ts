@@ -5,6 +5,8 @@
   import { generatePdfs } from "@/utills/pdfGeneration";
   import { generateWithFallback } from "@/lib/ai/generate";
   import { userLimiter, globalLimiter, getIdentifier } from "@/lib/ai/ratelimit";
+  import { getTelegramUser, sendDocument } from "@/lib/telegram";
+  import { trackGeneration } from "@/lib/analytics";
   const MAX_SIZE = 1 * 1024 * 1024; // 1 MB
   const MAX_CHARS = 60000;
   const MAX_QUESTIONS = 100;
@@ -327,8 +329,21 @@ ${text.slice(0, MAX_CHARS)}`;
         type: "application/pdf",
       }));
 
+    const tgUser = getTelegramUser(req);
+    let sentToChat = false;
+
+    if (tgUser) {
+      const sent = await Promise.all(
+        Object.entries(results)
+          .filter(([, bytes]) => bytes !== null)
+          .map(([key, bytes]) => sendDocument(tgUser.id, bytes!, `${key}.pdf`))
+      );
+      sentToChat = sent.length > 0 && sent.every(Boolean);
+    }
+    await trackGeneration();
+
     return NextResponse.json(
-      { result: files, remaining: user.remaining },
+      { result: files, remaining: user.remaining, sentToChat },
       { headers: { "X-RateLimit-Remaining": String(user.remaining) } },
     );
   } catch (err: any) {
