@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const BOT_TOKEN = process.env.BOT_TOKEN!;
 const WEBAPP_URL = process.env.WEBAPP_URL!;
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET!;
-
+console.log(BOT_TOKEN,WEBAPP_URL,WEBHOOK_SECRET)
 const API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function tg(method: string, body: Record<string, unknown>) {
