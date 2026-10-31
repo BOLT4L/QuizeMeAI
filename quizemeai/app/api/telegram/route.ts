@@ -16,11 +16,12 @@ async function tg(method: string, body: Record<string, unknown>) {
 }
 
 export async function POST(req: Request) {
-  const got = req.headers.get("x-telegram-bot-api-secret-token");
+ const got = req.headers.get("x-telegram-bot-api-secret-token") ?? "";
 console.log("[tg]", {
-  headerPresent: !!got,
-  envPresent: !!WEBHOOK_SECRET,
-  matches: got === WEBHOOK_SECRET,
+  gotLen: got.length,
+  envLen: WEBHOOK_SECRET?.length,
+  envHasWhitespace: /\s/.test(WEBHOOK_SECRET ?? ""),
+  envHasQuotes: /["']/.test(WEBHOOK_SECRET ?? ""),
 });
   // Only accept requests that really come from Telegram
   if (req.headers.get("x-telegram-bot-api-secret-token") !== WEBHOOK_SECRET) {
