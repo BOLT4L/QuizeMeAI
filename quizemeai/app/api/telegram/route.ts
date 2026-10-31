@@ -18,8 +18,8 @@ async function tg(method: string, body: Record<string, unknown>) {
 export async function POST(req: Request) {
  const got = req.headers.get("x-telegram-bot-api-secret-token") ?? "";
 console.log("[tg]", {
-  gotLen: got.length,
-  envLen: WEBHOOK_SECRET?.length,
+  gotLen: got,
+  envLen: WEBHOOK_SECRET,
   envHasWhitespace: /\s/.test(WEBHOOK_SECRET ?? ""),
   envHasQuotes: /["']/.test(WEBHOOK_SECRET ?? ""),
 });
